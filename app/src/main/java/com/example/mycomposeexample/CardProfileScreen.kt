@@ -6,6 +6,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material.*
@@ -42,9 +43,10 @@ val users = arrayListOf(UserInfo(), UserInfo(),
 fun ProfileDetailedScreen(profileIndex: Int) {
     val userInfo: UserInfo = users[profileIndex]
     var isImageExpanded by remember { mutableStateOf(false) }
-    val verticalScrollState = rememberScrollState()
-    val offsetCoefficient = max(min(1f,
-        1f - verticalScrollState.value / 600f), 0.5f)
+    val lazyScrollState = rememberLazyListState()
+    val offsetLazyScroll: Float = lazyScrollState.firstVisibleItemScrollOffset / 300f +
+            lazyScrollState.firstVisibleItemIndex
+    val offsetCoefficient = max(min(1f, 1f - offsetLazyScroll), 0.5f)
 
     val imageSizeDp: Dp by animateDpAsState(
         targetValue = (if (isImageExpanded) 200.dp else 100.dp) * offsetCoefficient
@@ -57,7 +59,7 @@ fun ProfileDetailedScreen(profileIndex: Int) {
         Column(modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.Start
         )
         {
             Surface(elevation = 4.dp) {
@@ -71,15 +73,22 @@ fun ProfileDetailedScreen(profileIndex: Int) {
                     IsUserOnlineText(userInfo.isOnline)
                 }
             }
-            Column(modifier = Modifier.verticalScroll(verticalScrollState) ) {
-                for(i in 0 .. 20) {
-                    Text("Text element $i", style = MaterialTheme.typography.h5)
+
+            val listItems = mutableListOf<String>()
+            for(i in 0 .. 20) {
+                listItems.add("$i")
+            }
+
+            LazyColumn(state = lazyScrollState, modifier = Modifier.fillMaxWidth()) {
+                itemsIndexed(listItems) { _, item ->
+                    Text(item, style = MaterialTheme.typography.h5)
                 }
             }
         }
         
     }
 }
+
 
 @Composable
 fun ProfilesListScreen(navController: NavHostController? = null) {
